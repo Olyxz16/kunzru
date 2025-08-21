@@ -9,7 +9,7 @@ import (
 
 type FileRepository struct {}
 
-func ReadFile(filePath string) (*domain.RawFile, error) {
+func (r FileRepository) ReadFile(filePath string) (*domain.RawFile, error) {
 	content, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, err
@@ -17,7 +17,7 @@ func ReadFile(filePath string) (*domain.RawFile, error) {
 	return domain.NewFile(filePath, string(content)), nil
 }
 
-func ReadDir(dirPath string) ([]*domain.RawFile, error) {
+func (r FileRepository) ReadDir(dirPath string) ([]*domain.RawFile, error) {
 	entries, err := os.ReadDir(dirPath)
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func ReadDir(dirPath string) ([]*domain.RawFile, error) {
 	return files, nil
 }
 
-func SaveFile(file *domain.RawFile) error {
+func (r FileRepository) SaveFile(file *domain.RawFile) error {
 	content, err := file.Content()
 	if err != nil {
 		return err
