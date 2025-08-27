@@ -1,7 +1,9 @@
 package domain
 
 import (
+	"errors"
 	"fmt"
+	"regexp"
 )
 
 type ContextFile struct {
@@ -14,13 +16,17 @@ func NewContextFile(path, description string) *ContextFile {
 }
 
 func FileFromMarkdown(markdown string) (*ContextFile, error) {
+	re := regexp.MustCompile(`^-\s?["'` + "\\`" + `]?(\S*)["'` + "`" + `]?\s?:\s*(.*)$`)
 	var path string
 	var description string
 	
-	_, err := fmt.Sscanf(markdown, "%s : %s\n", &path, &description)
-	if err != nil {
-		return nil, err	
+	m := re.FindStringSubmatch(markdown)
+	if len(m) == 0 {
+		return nil, errors.New("no match found")
 	}
+
+	path = m[1]
+	description = m[2]
 
 	return &ContextFile{
 		path: path,
@@ -37,5 +43,5 @@ func (f *ContextFile) GetDescription() string {
 }
 
 func (f *ContextFile) ToMarkdown() string {
-	return fmt.Sprintf("%s : %s\n", f.path, f.description)
+	return fmt.Sprintf("- %s : %s\n\n", f.path, f.description)
 }

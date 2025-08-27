@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 )
@@ -24,61 +23,57 @@ func EmptyModule(path string) *ContextModule {
 
 func ModuleFromMarkdown(path, markdown string) (*ContextModule, error) {
 	module := &ContextModule{path: path}
-	lines := strings.Split(markdown, "\n")
+	lines := splitAndTrim(markdown)
 	if len(lines) < 2 {
 		return EmptyModule(path), nil
 	}
-	
+
 	var subject string
-	_, err := fmt.Sscanf(lines[0], "# %s\n", &subject)
+	_, err := fmt.Sscanf(lines[0], "# %s", &subject)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error when parsing module subject : %s\n", err.Error())
 	}
-	var description string
-	_, err = fmt.Sscanf(lines[1], "### %s\n", &description)
-	if err != nil {
-		return nil, err
-	}
+	var description = lines[2]
+
+	module.subject = subject
+	module.description = description
 	
-	index := 2
+	index := 3
 	var equals bool
 
 	/* Modules */
-	equals = lines[index] == "### Modules\n"
-	if !equals {
-		return nil, errors.New("Wrong module delimiter")
-	}
-	index++
-
-	for !strings.HasPrefix(lines[index], "#") {
-		var path string
-		var description string
-		_, err := fmt.Sscanf(lines[index], "%s : %s\n", &path, &description)
-		if err != nil {
-			return nil, err
-		}
-		module := EmptyModule(path)
-		module.description = description
+	equals = index < len(lines) && lines[index] == "### Modules"
+	if equals {
 		index++
+
+		for index < len(lines) && !strings.HasPrefix(lines[index], "#") && len(lines[index]) > 0 {
+			submoduleFile, err := FileFromMarkdown(lines[index])
+			if err != nil {
+				fmt.Println(lines[index])
+				return nil, fmt.Errorf("Error when parsing submodule : %s\n", err.Error())
+			}
+			submodule := EmptyModule(submoduleFile.path)
+			submodule.description = submoduleFile.description
+			module.AddModule(submodule)
+			index++
+		}
 	}
 
 	/* Files */
-	equals = lines[index] == "### Files\n"
-	if !equals {
-		return nil, errors.New("Wrong file delimiter")
-	}
-	index++
-
-	for !strings.HasPrefix(lines[index], "#") {
-		contextFile, err := FileFromMarkdown(lines[index])
-		if err != nil {
-			return nil, err
-		}
-		module.AddFile(contextFile)
+	equals = index < len(lines) && lines[index] == "### Files"
+	if equals {
 		index++
+
+		for index < len(lines) && !strings.HasPrefix(lines[index], "#") && len(lines[index]) > 0 {
+			contextFile, err := FileFromMarkdown(lines[index])
+			if err != nil {
+				return nil, fmt.Errorf("Error when parsing file : %s\n", err.Error())
+			}
+			module.AddFile(contextFile)
+			index++
+		}
 	}
 
-	
 	return module, nil
 }
 
@@ -116,17 +111,36 @@ func (m *ContextModule) AddModule(module *ContextModule) {
 
 func (m *ContextModule) ToMarkdown() string {
 	builder := strings.Builder{}
-	builder.WriteString(fmt.Sprintf("# %s\n", m.subject))
-	builder.WriteString(fmt.Sprintf("%s\n", m.description))
+	builder.WriteString(fmt.Sprintf("# %s\n\n", m.subject))
+	builder.WriteString("### Description\n\n")
+	builder.WriteString(fmt.Sprintf("%s\n\n", m.description))
 	
-	builder.WriteString("### Modules\n")
-	for _, f := range m.modules {
-		builder.WriteString(fmt.Sprintf("%s : %s\n", f.path, f.description))
+	if len(m.modules) > 0 {
+		builder.WriteString("### Modules\n\n")
 	}
-
-	builder.WriteString("### Files\n")
+	for _, f := range m.modules {
+		builder.WriteString(fmt.Sprintf("%s : %s\n\n", f.path, f.description))
+	}
+	
+	if len(m.files) > 0 {
+		builder.WriteString("### Files\n\n")
+	}
 	for _, f := range m.files {
 		builder.WriteString(f.ToMarkdown())
 	}
 	return builder.String()
+}
+
+func splitAndTrim(markdown string) []string {
+	lines := strings.Split(markdown, "\n")
+	result := make([]string, 0, len(lines))
+	
+	for _, l := range lines {
+		trimmed := strings.Trim(l, " ")	
+		if len(trimmed) > 0 {
+			result = append(result, l)
+		}
+	}
+
+	return result
 }
