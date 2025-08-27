@@ -9,6 +9,10 @@ import (
 
 type FileRepository struct {}
 
+func NewFileRepository() FileRepository {
+	return FileRepository{}	
+}
+
 func (r FileRepository) ReadFile(filePath string) (*domain.RawFile, error) {
 	content, err := os.ReadFile(filePath)
 	if err != nil {
