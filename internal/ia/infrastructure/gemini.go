@@ -12,7 +12,7 @@ func NewGeminiService() GeminiService {
 }
 
 func (g GeminiService) Prompt(prompt string) (string, error) {
-	cmd := exec.Command("gemini", "-p")
+	cmd := exec.Command("gemini", "-m", "gemini-2.5-flash", "-p")
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
@@ -21,8 +21,7 @@ func (g GeminiService) Prompt(prompt string) (string, error) {
 
 	go func() {
 		defer stdin.Close()
-		ioString := prompt
-		stdin.Write([]byte(ioString))
+		stdin.Write([]byte(prompt))
 	}()
 
 	outputBytes, err := cmd.CombinedOutput()
@@ -31,7 +30,8 @@ func (g GeminiService) Prompt(prompt string) (string, error) {
 	}
 	output := string(outputBytes)
 	slices := strings.Split(output, "\n")
-	output = slices[2]
+	slices = slices[1:]
+	output = strings.Join(slices, "\n")
 
 	return output, nil
 }
