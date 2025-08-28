@@ -34,7 +34,7 @@ var generateCommand = &cobra.Command{
 		contextService := context.NewContextService(fsRepository, aiRepository)
 		_, err := contextService.GenerateContextTree(".")
 		if err != nil {
-			panic(err)
+			fmt.Printf("Error : %s\n", err.Error())
 		}
 	},
 }
