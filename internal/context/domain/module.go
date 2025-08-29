@@ -49,6 +49,7 @@ func ModuleFromMarkdown(path, markdown string) (*ContextModule, error) {
 		for index < len(lines) && !strings.HasPrefix(lines[index], "#") && len(lines[index]) > 0 {
 			submoduleFile, err := FileFromMarkdown(lines[index])
 			if err != nil {
+				fmt.Printf("%s\n", lines[index])
 				return nil, fmt.Errorf("Error when parsing submodule : %s\n", err.Error())
 			}
 			submodule := EmptyModule(submoduleFile.path)
@@ -135,7 +136,7 @@ func splitAndTrim(markdown string) []string {
 	result := make([]string, 0, len(lines))
 	
 	for _, l := range lines {
-		trimmed := strings.Trim(l, " ")	
+		trimmed := strings.Trim(l, " \t")	
 		if len(trimmed) > 0 {
 			result = append(result, l)
 		}
