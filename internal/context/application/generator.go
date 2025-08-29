@@ -2,6 +2,7 @@ package application
 
 import (
 	"errors"
+	"fmt"
 	"path"
 
 	"github.com/Olyxz16/kunzru/internal/context/domain"
@@ -48,7 +49,7 @@ func (s ContextService) buildAbstractContextTree(inputDir string) (*moduleContai
 			return nil, err
 		}
 
-		contextFile, ignoreFile, dirs, files := s.parseDirectoryIgnore(entries, ignore)
+		contextFile, dirs, files, ignoreService := s.parseDirectoryIgnore(entries, ignore)
 
 		if contextFile != nil {
 			newContainer := emptyContainer(dir)
@@ -56,15 +57,8 @@ func (s ContextService) buildAbstractContextTree(inputDir string) (*moduleContai
 			container = newContainer
 		}
 
-		if ignoreFile != nil {
-			ignore, err = ignore.AddFile(ignoreFile)
-			if err != nil {
-				return nil, err
-			}
-		}	
-
 		for _, dir := range dirs {
-			queue = append(queue, contextEntry{dir.Path(), ignore, container})
+			queue = append(queue, contextEntry{dir.Path(), ignoreService, container})
 		}
 
 		for _, file := range files {
@@ -97,11 +91,13 @@ func (s ContextService) buildContextTreeFromAbstractTree(container *moduleContai
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("prompt : \n%s\n", content)
 
 	result, err := s.iaPort.Prompt(content)
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("result : \n%s\n", result)
 
 	module, err := domain.ModuleFromMarkdown(container.modulePath, result)
 	if err != nil {
