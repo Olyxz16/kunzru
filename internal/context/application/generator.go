@@ -2,7 +2,6 @@ package application
 
 import (
 	"errors"
-	"fmt"
 	"path"
 
 	"github.com/Olyxz16/kunzru/internal/context/domain"
@@ -91,13 +90,11 @@ func (s ContextService) buildContextTreeFromAbstractTree(container *moduleContai
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("prompt : \n%s\n", content)
 
 	result, err := s.iaPort.Prompt(content)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("result : \n%s\n", result)
 
 	module, err := domain.ModuleFromMarkdown(container.modulePath, result)
 	if err != nil {

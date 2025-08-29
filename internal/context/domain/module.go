@@ -49,7 +49,6 @@ func ModuleFromMarkdown(path, markdown string) (*ContextModule, error) {
 		for index < len(lines) && !strings.HasPrefix(lines[index], "#") && len(lines[index]) > 0 {
 			submoduleFile, err := FileFromMarkdown(lines[index])
 			if err != nil {
-				fmt.Println(lines[index])
 				return nil, fmt.Errorf("Error when parsing submodule : %s\n", err.Error())
 			}
 			submodule := EmptyModule(submoduleFile.path)
